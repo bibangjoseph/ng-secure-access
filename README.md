@@ -79,22 +79,17 @@ Utilisez la directive `appHasPermission` pour afficher ou masquer des éléments
 Lorsque l'utilisateur n'a pas les permissions requises, vous pouvez spécifier dynamiquement où il sera redirigé en utilisant l'option `redirectTo` dans la configuration de la route.
 
 ```typescript
-{
-    path: 'edit',
-        canActivate
-:
-    [PermissionGuard],
-        data
-:
+const routes: Routes = [
     {
-        permissions: ['edit'],
-            redirectTo
-    :
-        'custom-access-denied' // Redirection personnalisée si l'utilisateur n'a pas la permission 'edit'
+        path: 'dashboard',
+        canActivate: [PermissionGuard],
+        data: {
+            permissions: ['viewDashboard'],
+            redirectTo: 'no-access'
+        },
+        loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
     }
-,
-    loadComponent: () => import('./pages/edit-page/edit-page.component').then(m => m.EditPageComponent),
-}
+];
 ```
 
 ## API
