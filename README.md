@@ -1,27 +1,157 @@
-# NgSecureAccess
+# ng-secure-access
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.1.4.
+`ng-secure-access` est une librairie Angular qui permet de gérer les permissions d'accès aux routes et l'affichage des éléments en fonction des permissions d'un utilisateur. Elle permet de charger dynamiquement les permissions après l'authentification et de contrôler l'accès aux différentes parties de votre application.
 
-## Development server
+## Fonctionnalités
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+- **Gestion des permissions dynamiques** : Charge un tableau de permissions pour un utilisateur après l'authentification.
+- **Protection des routes** : Utilise un `Guard` pour vérifier les permissions avant d'accéder à une route.
+- **Affichage conditionnel des éléments** : Affiche ou masque des éléments en fonction des permissions.
+- **Redirection dynamique** : Redirige l'utilisateur vers des pages spécifiques s'il n'a pas les permissions requises.
 
-## Code scaffolding
+## Installation
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+1. Installez la librairie en l'ajoutant à votre projet :
 
-## Build
+   ```bash
+   npm install ng-secure-access
+   ```
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+2. Ajoutez le module de la librairie dans votre application Angular.
 
-## Running unit tests
+## Utilisation
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+### 1. Charger les permissions
 
-## Running end-to-end tests
+Les permissions doivent être chargées après l'authentification de l'utilisateur, par exemple dans un `LayoutComponent` :
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+```typescript
+import {Component, OnInit} from '@angular/core';
+import {PermissionService} from 'ng-secure-access';
 
-## Further help
+@Component({
+    selector: 'app-layout',
+    templateUrl: './layout.component.html',
+})
+export class LayoutComponent implements OnInit {
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+    constructor(private permissionService: PermissionService) {
+    }
+
+    ngOnInit() {
+        // Charger les permissions après l'authentification de l'utilisateur
+        this.permissionService.loadPermissions(['update', 'delete', 'create']);
+    }
+}
+```
+
+### 2. Protéger une route avec des permissions
+
+Pour protéger une route, ajoutez le `PermissionGuard` à votre route et spécifiez les permissions requises dans `data`.
+
+```typescript
+const routes: Routes = [
+    {
+        path: 'create',
+        canActivate: [PermissionGuard],
+        data: {
+            permissions: ['create'], // Les permissions requises pour accéder à cette route
+            redirectTo: 'access-denied' // Lien de redirection en cas de permissions insuffisantes
+        },
+        loadComponent: () => import('./pages/create-page/create-page.component').then(m => m.CreatePageComponent),
+    }
+];
+```
+
+### 3. Utiliser une directive pour afficher des éléments conditionnellement
+
+Utilisez la directive `appHasPermission` pour afficher ou masquer des éléments en fonction des permissions d'un utilisateur.
+
+```html
+<!-- Afficher cet élément uniquement si l'utilisateur a les permissions 'update' ou 'delete' -->
+<div *appHasPermission="['update', 'delete']">
+    Vous avez les permissions pour mettre à jour ou supprimer.
+</div>
+```
+
+### 4. Redirection dynamique en fonction des permissions
+
+Lorsque l'utilisateur n'a pas les permissions requises, vous pouvez spécifier dynamiquement où il sera redirigé en utilisant l'option `redirectTo` dans la configuration de la route.
+
+```typescript
+{
+    path: 'edit',
+        canActivate
+:
+    [PermissionGuard],
+        data
+:
+    {
+        permissions: ['edit'],
+            redirectTo
+    :
+        'custom-access-denied' // Redirection personnalisée si l'utilisateur n'a pas la permission 'edit'
+    }
+,
+    loadComponent: () => import('./pages/edit-page/edit-page.component').then(m => m.EditPageComponent),
+}
+```
+
+## API
+
+### Services
+
+#### `PermissionService`
+
+- **`loadPermissions(permissions: string[]): void`** : Charge les permissions pour l'utilisateur actuel.
+- **`hasPermission(permissions: string[]): boolean`** : Vérifie si l'utilisateur possède au moins une des permissions spécifiées.
+- **`arePermissionsLoaded(): boolean`** : Retourne `true` si les permissions sont chargées.
+
+### Directives
+
+#### `appHasPermission`
+
+- Utilisation : `*appHasPermission="['permission1', 'permission2']"`
+- Affiche ou masque l'élément en fonction des permissions passées en paramètre.
+
+### Guards
+
+#### `PermissionGuard`
+
+- Utilisation : `canActivate: [PermissionGuard]`
+- Vérifie les permissions d'un utilisateur avant de lui permettre d'accéder à une route protégée.
+
+## Exemples
+
+### Exemple complet d'une route protégée avec redirection
+
+```typescript
+const routes: Routes = [
+    {
+        path: 'dashboard',
+        canActivate: [PermissionGuard],
+        data: {
+            permissions: ['viewDashboard'],
+            redirectTo: 'no-access'
+        },
+        loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
+    }
+];
+```
+
+### Exemple complet d'une directive pour afficher un bouton en fonction des permissions
+
+```html
+
+<button *appHasPermission="['admin']">
+    Gérer les utilisateurs
+</button>
+```
+
+## Contribution
+
+Les contributions sont les bienvenues ! Si vous souhaitez améliorer cette librairie ou signaler un problème, merci de soumettre un pull request ou d'ouvrir une issue.
+
+## Licence
+
+`ng-secure-access` est sous licence MIT.
